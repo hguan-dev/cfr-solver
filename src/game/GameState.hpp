@@ -2,6 +2,7 @@
 #include "../cards/Card.hpp"
 #include "HandEvaluator.hpp"
 #include <array>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,21 @@ enum class ActionType { FOLD, CHECK_CALL, BET_RAISE };
 struct Action {
   ActionType type;
   double amount;
+};
+
+// A lightweight, stack-allocated replacement for std::vector<Action>
+struct FixedActions {
+  std::array<Action, 3> data;
+  int count = 0;
+
+  void push_back(const Action &a) { data[count++] = a; }
+
+  int size() const { return count; }
+
+  // Iterators allow this to work with for-loops and standard algorithms
+  const Action *begin() const { return data.data(); }
+  const Action *end() const { return data.data() + count; }
+  const Action &operator[](int i) const { return data[i]; }
 };
 
 // Global helper to bridge Card class and Solver ints
@@ -36,10 +52,11 @@ public:
   bool is_folded;
 
   bool isTerminal() const;
-  std::vector<Action> getLegalActions() const;
+  FixedActions getLegalActions() const;
   void applyAction(const Action &action);
 
   std::string getInfoSetKey(const std::vector<int> &hole_cards) const;
+  uint64_t getInfoSetKeyHash(const std::vector<int> &hole_cards) const;
   double getPayoff(const std::vector<int> &p0, const std::vector<int> &p1,
                    HandEvaluator &eval) const;
 

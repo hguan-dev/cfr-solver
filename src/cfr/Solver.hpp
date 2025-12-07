@@ -1,38 +1,46 @@
 #pragma once
 
-#include "Deck.hpp"
-#include "GameState.hpp"
+#include "../cards/Deck.hpp"
+#include "../game/GameState.hpp"
+#include <string>
+#include <unordered_map>
 #include <vector>
+
+struct TrainingScenario {
+  std::vector<int> p0_cards;
+  std::vector<int> p1_cards;
+  std::vector<int> board;
+};
 
 struct CFRNode {
   std::vector<double> regretSum;
+  std::string infoSetKeyString;
   std::vector<double> strategySum;
-  std::vector<Action> legalActions;
+  FixedActions legalActions;
+  int visits; // Track visits for pruning/debugging
 
-  CFRNode() {}
+  CFRNode() : visits(0) {}
   CFRNode(int num_actions)
-      : regretSum(num_actions, 0.0), strategySum(num_actions, 0.0) {}
+      : regretSum(num_actions, 0.0), strategySum(num_actions, 0.0), visits(0) {}
 };
 
 class Solver {
 public:
   Solver(HandEvaluator &evaluator);
 
-  // Run N iterations of External Sampling MCCFR
   void train(int iterations);
-
-  // Export the average strategy to a CSV file
   void saveStrategy(const std::string &filename);
 
 private:
   HandEvaluator &evaluator_;
-  std::unordered_map<std::string, CFRNode> nodeMap_;
+  std::unordered_map<uint64_t, CFRNode> nodeMap_;
   Deck deck_;
 
-  // Recursive MCCFR function
+  std::vector<TrainingScenario> scenarios_;
+  std::vector<int> iteration_board_;
+
   double cfr(GameState &state, std::vector<int> &p0_cards,
              std::vector<int> &p1_cards);
-
-  // Helper to get or create a node in the map
-  CFRNode *getNode(const std::string &infoSet, const GameState &state);
+  CFRNode *getNode(uint64_t infoSetHash, const GameState &state,
+                   const std::vector<int> &myCards);
 };

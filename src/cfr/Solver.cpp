@@ -1,69 +1,56 @@
 #include "Solver.hpp"
-#include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <numeric>
+
+extern int cardToInt(const Card &c);
 
 Solver::Solver(HandEvaluator &eval) : evaluator_(eval) {}
 
-CFRNode *Solver::getNode(const std::string &infoSet, const GameState &state) {
-  if (nodeMap_.find(infoSet) == nodeMap_.end()) {
+CFRNode *Solver::getNode(uint64_t infoSetHash, const GameState &state,
+                         const std::vector<int> &my_cards) {
+  auto it = nodeMap_.find(infoSetHash);
+
+  if (it == nodeMap_.end()) {
     auto legal = state.getLegalActions();
-    CFRNode node(legal.size());
+
+    auto &node = nodeMap_[infoSetHash];
+    node.infoSetKeyString = state.getInfoSetKey(my_cards);
+
     node.legalActions = legal;
-    nodeMap_[infoSet] = node;
+    node.regretSum.resize(legal.size(), 0.0);
+    node.strategySum.resize(legal.size(), 0.0);
+
+    return &node;
   }
-  return &nodeMap_[infoSet];
+
+  return &it->second;
 }
 
 double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
                    std::vector<int> &p1_cards) {
-  // [FIX] 1. Capture the deck state before doing anything
-  int initialDeckSize = deck_.getLength();
-
   if (state.isTerminal()) {
     return state.getPayoff(p0_cards, p1_cards, evaluator_);
   }
 
-  // Chance Sampling: Deal board cards if needed
-  int cards_needed = 0;
-  // Assuming Street enum: PRE=0, FLOP=1, TURN=2, RIVER=3
-  if (state.street == Street::FLOP && state.board.empty())
-    cards_needed = 3;
-  else if ((state.street == Street::TURN || state.street == Street::RIVER) &&
-           state.board.size() < (size_t)state.street + 2)
-    cards_needed = 1;
-
-  if (cards_needed > 0) {
-    // Draw distinct cards for the board
-    for (int i = 0; i < cards_needed; ++i) {
-      while (true) {
-        int c = cardToInt(deck_.popTop());
-        bool used = false;
-        for (int x : p0_cards)
-          if (x == c)
-            used = true;
-        for (int x : p1_cards)
-          if (x == c)
-            used = true;
-        for (int x : state.board)
-          if (x == c)
-            used = true;
-
-        if (!used) {
-          state.board.push_back(c);
-          break;
-        }
-      }
-    }
+  if (state.street == Street::FLOP && state.board.empty()) {
+    state.board.push_back(iteration_board_[0]);
+    state.board.push_back(iteration_board_[1]);
+    state.board.push_back(iteration_board_[2]);
+  } else if (state.street == Street::TURN && state.board.size() == 3) {
+    state.board.push_back(iteration_board_[3]);
+  } else if (state.street == Street::RIVER && state.board.size() == 4) {
+    state.board.push_back(iteration_board_[4]);
   }
 
   int player = state.active_player;
   std::vector<int> &my_cards = (player == 0) ? p0_cards : p1_cards;
-  std::string infoSet = state.getInfoSetKey(my_cards);
-  CFRNode *node = getNode(infoSet, state);
+  uint64_t infoSetHash = state.getInfoSetKeyHash(my_cards);
+  CFRNode *node = getNode(infoSetHash, state, my_cards);
 
-  // Regret Matching to determine current strategy
+  node->visits++; // Count visits
+
+  // Regret Matching
   std::vector<double> strategy(node->legalActions.size());
   double regretSumTotal = 0.0;
   for (double r : node->regretSum)
@@ -77,7 +64,6 @@ double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
       strategy[a] = 1.0 / node->legalActions.size();
   }
 
-  // Recursive traversal
   std::vector<double> actionUtils(node->legalActions.size());
   double nodeUtil = 0.0;
 
@@ -89,25 +75,62 @@ double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
     nodeUtil += strategy[a] * actionUtils[a];
   }
 
-  // Update Regrets and Average Strategy
   for (size_t a = 0; a < node->legalActions.size(); ++a) {
     double regret = actionUtils[a] - nodeUtil;
     node->regretSum[a] += regret;
     node->strategySum[a] += strategy[a];
   }
 
-  // [FIX] 2. Restore the deck index so sibling branches use the same cards
-  deck_.restore(initialDeckSize);
-
   return nodeUtil;
 }
+
 void Solver::train(int iterations) {
+  if (scenarios_.empty()) {
+    std::cout << "[Solver] Generating 20 fixed BOARDS..." << std::endl;
+    for (int i = 0; i < 20; ++i) {
+      deck_.shuffle();
+      TrainingScenario s;
+      deck_.popTop();
+      deck_.popTop();
+      deck_.popTop();
+      deck_.popTop();
+
+      // Save the board
+      for (int k = 0; k < 5; ++k)
+        s.board.push_back(cardToInt(deck_.popTop()));
+      scenarios_.push_back(s);
+    }
+  }
+
   for (int i = 0; i < iterations; ++i) {
+    const auto &s = scenarios_[i % scenarios_.size()];
+    iteration_board_ = s.board;
+
     deck_.shuffle();
-    std::vector<int> p0 = {cardToInt(deck_.popTop()),
-                           cardToInt(deck_.popTop())};
-    std::vector<int> p1 = {cardToInt(deck_.popTop()),
-                           cardToInt(deck_.popTop())};
+    std::vector<int> p0, p1;
+
+    while (p0.size() < 2) {
+      int c = cardToInt(deck_.popTop());
+      bool collision = false;
+      for (int b : iteration_board_)
+        if (b == c)
+          collision = true;
+      if (!collision)
+        p0.push_back(c);
+    }
+
+    while (p1.size() < 2) {
+      int c = cardToInt(deck_.popTop());
+      bool collision = false;
+      for (int b : iteration_board_)
+        if (b == c)
+          collision = true;
+      for (int p : p0)
+        if (p == c)
+          collision = true;
+      if (!collision)
+        p1.push_back(c);
+    }
 
     GameState root;
     cfr(root, p0, p1);
@@ -121,8 +144,15 @@ void Solver::saveStrategy(const std::string &filename) {
   std::ofstream file(filename);
   file << "InfoSet,Fold,CheckCall,BetRaise\n";
 
+  int saved_count = 0;
   for (auto &pair : nodeMap_) {
     CFRNode &node = pair.second;
+
+    // PRUNE NODES
+    if (node.visits < 35)
+      continue;
+    saved_count++;
+
     double sum = 0;
     for (double s : node.strategySum)
       sum += s;
@@ -133,7 +163,6 @@ void Solver::saveStrategy(const std::string &filename) {
                          : (1.0 / node.legalActions.size());
     }
 
-    // Map to standard columns
     double pFold = 0, pCall = 0, pRaise = 0;
     for (size_t i = 0; i < node.legalActions.size(); ++i) {
       if (node.legalActions[i].type == ActionType::FOLD)
@@ -147,5 +176,6 @@ void Solver::saveStrategy(const std::string &filename) {
     file << pair.first << "," << pFold << "," << pCall << "," << pRaise << "\n";
   }
   file.close();
-  std::cout << "Strategy saved to " << filename << std::endl;
+  std::cout << "Strategy saved to " << filename << " (" << saved_count
+            << " rows)" << std::endl;
 }
