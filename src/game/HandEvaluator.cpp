@@ -12,7 +12,7 @@ int HandEvaluator::hashQuinaryResult(
   int sum = 0;
   int remainingCards = 7;
 
-  for (size_t rank = 0; rank < rankQuinary.size(); rank++) {
+  for (std::size_t rank = 0; rank < rankQuinary.size(); rank++) {
     sum += DP_TABLE[rankQuinary[rank]][13 - rank - 1][remainingCards];
     remainingCards -= rankQuinary[rank];
 

@@ -3,11 +3,8 @@ version: '3'
 tasks:
   build:
     cmds:
-      - mkdir -p build
-      - cd build && cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
-      - cmake --build build
+      - make build
 
   run:
-    deps: [build]
     cmds:
-      - ./build/bin/cfr_solver
+      - make run

@@ -1,5 +1,4 @@
 #include "Card.hpp"
-#include <fmt/core.h>
 
 Card::Card(RANK rank, SUIT suit) : rank(rank), suit(suit) {}
 Card::Card() : rank(RANK::INVALID), suit(SUIT::INVALID) {}

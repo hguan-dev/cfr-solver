@@ -1,0 +1,21 @@
+# proxy for deps
+DEPS := build/conan_toolchain.cmake
+
+.PHONY: deps
+$(DEPS):
+	mkdir -p build
+	conan install . --output-folder=build --build=missing
+
+.PHONY: build
+build: $(DEPS)
+	cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
+	cmake --build build
+
+.PHONY: run
+run: build
+	./build/bin/cfr_solver
+
+.PHONY: clean
+clean:
+	rm -rf build
+	rm -rf CMakeUserPresets.json

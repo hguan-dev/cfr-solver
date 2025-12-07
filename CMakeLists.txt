@@ -21,8 +21,7 @@ if(PROFILING)
     add_link_options(-pg)
 endif()
 
-include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
-
+# include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
 find_package(fmt REQUIRED)
 
 set(CORE_IMPLEMENTATION_SOURCES
