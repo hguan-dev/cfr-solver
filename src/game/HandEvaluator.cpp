@@ -2,8 +2,9 @@
 #include <array>
 
 static inline int convert_ID_to_eval_scheme(int old_id) {
-  const int rank = old_id % 13;
-  const int suit = old_id / 13;
+  const int n = old_id - 1;
+  const int rank = n % 13;
+  const int suit = n / 13;
   return (rank * 4) + suit;
 }
 
