@@ -76,10 +76,10 @@ class ConstrainedLinearModel(ModelBase):
     Train three regularized linear models for each label and enforce probability axioms.
     """
 
-    def __init__(self, alpha=0.01):
+    def __init__(self, alpha=0.005):
         self.name = "Constrained Linear Model"
         self.model = sklearn.multioutput.MultiOutputRegressor(
-            sklearn.linear_model.Lasso(alpha=alpha, random_state=RANDOM_SEED)
+            sklearn.linear_model.Ridge(alpha=alpha, random_state=RANDOM_SEED)
         )
 
     def get_name(self) -> str:
