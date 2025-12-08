@@ -95,8 +95,8 @@ void Solver::train(int iterations) {
   if (scenarios_.empty()) {
     nodeMap_.reserve(500000000);
 
-    std::cout << "[Solver] Generating 15 fixed BOARDS..." << std::endl;
-    for (int i = 0; i < 15; ++i) {
+    std::cout << "[Solver] Generating 100 fixed BOARDS..." << std::endl;
+    for (int i = 0; i < 100; ++i) {
       deck_.shuffle();
       TrainingScenario s;
       deck_.popTop();
@@ -158,7 +158,7 @@ void Solver::saveStrategy(const std::string &filename) {
     CFRNode &node = pair.second;
 
     // Node pruning before data
-    if (node.visits < 100)
+    if (node.visits < 25)
       continue;
     saved_count++;
 

@@ -11,19 +11,19 @@ int main() {
   std::cout << "[2] Initializing CFR Solver..." << std::endl;
   Solver solver(evaluator);
 
-  int iterations = 1000000;
+  constexpr int ITERATIONS = 10'000'000;
 
-  std::cout << "[3] Starting MCCFR for " << iterations << " iterations..."
+  std::cout << "[3] Starting MCCFR for " << ITERATIONS << " iterations..."
             << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
 
-  solver.train(iterations);
+  solver.train(ITERATIONS);
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
 
   std::cout << "   -> Finished in " << elapsed.count() << "s" << std::endl;
-  std::cout << "   -> Speed: " << (iterations / elapsed.count()) << " iter/s"
+  std::cout << "   -> Speed: " << (ITERATIONS / elapsed.count()) << " iter/s"
             << std::endl;
 
   std::string filename = "strategy_output.csv";
