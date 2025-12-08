@@ -25,7 +25,6 @@ endif()
 find_package(fmt REQUIRED)
 
 set(CORE_IMPLEMENTATION_SOURCES
-    src/cards/Card.cpp
     src/cards/Deck.cpp
     src/game/HandEvaluator.cpp
     src/game/HandHashes.cpp
@@ -49,4 +48,4 @@ add_executable(cfr_solver
 
 target_include_directories(cfr_solver PRIVATE ${COMMON_INCLUDE_DIRS})
 target_link_libraries(cfr_solver PRIVATE ${COMMON_LINK_LIBRARIES})
-set_target_properties(cfr_solver PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set_target_properties(cfr_solver PROPERTIES RUNTIME_OUTPUT_DIREdTORY ${CMAKE_BINARY_DIR}/bin)
