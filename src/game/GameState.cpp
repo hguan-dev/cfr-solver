@@ -1,5 +1,6 @@
 #include "GameState.hpp"
 #include <algorithm>
+#include <cstring>
 
 GameState::GameState() {
   street = Street::PREFLOP;
