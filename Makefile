@@ -19,3 +19,12 @@ run: build
 clean:
 	rm -rf build
 	rm -rf CMakeUserPresets.json
+
+.PHONY: test
+test: build
+	./build/bin/cfr_test
+
+.PHONY: format
+format:
+	python -m isort model/*.py
+	python -m black model/*.py

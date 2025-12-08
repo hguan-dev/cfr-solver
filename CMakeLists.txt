@@ -48,4 +48,17 @@ add_executable(cfr_solver
 
 target_include_directories(cfr_solver PRIVATE ${COMMON_INCLUDE_DIRS})
 target_link_libraries(cfr_solver PRIVATE ${COMMON_LINK_LIBRARIES})
+<<<<<<< HEAD
 set_target_properties(cfr_solver PROPERTIES RUNTIME_OUTPUT_DIREdTORY ${CMAKE_BINARY_DIR}/bin)
+=======
+set_target_properties(cfr_solver PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_executable(cfr_test
+    test/test_hand_evaluator.cpp
+    ${CORE_IMPLEMENTATION_SOURCES}
+)
+
+target_include_directories(cfr_test PRIVATE ${COMMON_INCLUDE_DIRS})
+target_link_libraries(cfr_test PRIVATE ${COMMON_LINK_LIBRARIES})
+set_target_properties(cfr_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+>>>>>>> 31ae933 (partial tests, set up model pipeline)
