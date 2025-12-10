@@ -1,4 +1,7 @@
 build/
 .DS_Store
 .cache/
+__pycache__/
 strategy_output.csv
+strategy_output_small.csv
+strategy_output_frozen.csv

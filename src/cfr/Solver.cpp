@@ -3,6 +3,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <cstring>
 
 Solver::Solver(HandEvaluator &eval) : evaluator_(eval) {}
 
