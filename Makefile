@@ -13,7 +13,7 @@ build: $(DEPS)
 
 .PHONY: run
 run: build
-	./build/bin/cfr_solver
+	./build/cfr_solver
 
 .PHONY: clean
 clean:

@@ -3,7 +3,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <cstring>
 
 Solver::Solver(HandEvaluator &eval) : evaluator_(eval) {}
 
@@ -95,7 +94,7 @@ double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
 
 void Solver::train(int iterations) {
   if (scenarios_.empty()) {
-    nodeMap_.reserve(500000000);
+    nodeMap_.reserve(5000000);
 
     std::cout << "[Solver] Generating 100 fixed BOARDS..." << std::endl;
     for (int i = 0; i < 100; ++i) {
@@ -145,7 +144,7 @@ void Solver::train(int iterations) {
     GameState root;
     cfr(root, p0, p1);
 
-    if ((i + 1) % 50000 == 0)
+    if ((i + 1) % 10000 == 0)
       std::cout << "Iteration " << (i + 1) << " complete..." << std::endl;
   }
 }
@@ -160,7 +159,7 @@ void Solver::saveStrategy(const std::string &filename) {
     CFRNode &node = pair.second;
 
     // Node pruning before data
-    if (node.visits < 25)
+    if (node.visits < 15)
       continue;
     saved_count++;
 
